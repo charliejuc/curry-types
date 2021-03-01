@@ -2,7 +2,7 @@
 import R, { Placeholder } from 'ramda'
 
 type Tail<T extends unknown[]> = T extends [unknown, ...infer ET] ? ET : []
-type Prepend<E, P extends unknown[]> = [E, ...P] extends [...infer EP] ? EP : P
+type Prepend<E, P extends unknown[]> = [E, ...P]
 type Drop<N extends number, P extends unknown[], C extends unknown[] = []> = {
     continueDropping: Drop<N, Tail<P>, Prepend<unknown, C>>
     return: P
@@ -35,25 +35,22 @@ type CleanedGaps<T extends unknown[]> = {
 }
 type Gaps<T extends unknown[]> = CleanedGaps<PartialGaps<T>>
 
-type CurryV2<
+type CurryV3<
     F extends (...args: any[]) => any,
     P extends unknown[] = Parameters<F>,
     R = ReturnType<F>
 > = <T extends unknown[]>(
-    ...args: Cast<T, Gaps<P>>
-) => GapsOf<T, P> extends [unknown, ...unknown[]]
-    ? // @ts-ignore
-      CurryV2<(...args: GapsOf<T, P>) => R, GapsOf<T, P>>
-    : R
+    ...args: Cast<T, Cast<Gaps<Parameters<F>>, unknown[]>>
+) => GapsOf<T, P> extends [unknown, ...unknown[]] ? CurryV3<(...args: GapsOf<T, P>) => R> : R
 
 // const a: GapsOf<[1, Placeholder, [], Placeholder], [number, string, [], number]>
 
 const getMessage = (base: string, amount: number, tail: string): string =>
     `${base} ${amount} ${tail}`
 
-const getMessageCurried = R.curry(getMessage) as CurryV2<typeof getMessage>
+const getMessageCurried = R.curry(getMessage) as CurryV3<typeof getMessage>
 
-// const a = getMessageCurried('sdfsad')(2)('asdf')
+// const a = getMessageCurried('sdfsad')(2)
 
 console.log(getMessageCurried('1 We have', 2, 'apples'))
 console.log(getMessageCurried('1 We have'))
